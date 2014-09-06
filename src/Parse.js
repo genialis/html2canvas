@@ -85,7 +85,7 @@ _html2canvas.Parse = function (images, options, cb) {
 
     // Using the list of elements we know how pseudo el styles, create fake pseudo elements.
     function findPseudoElements(el) {
-      var els = document.querySelectorAll(classes.join(','));
+      var els = document.querySelectorAll(_.compact(classes).join(','));
       for(var i = 0, j = els.length; i < j; i++) {
         createPseudoElements(els[i]);
       }
