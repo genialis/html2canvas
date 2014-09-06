@@ -1,4 +1,7 @@
 _html2canvas.Parse = function (images, options, cb) {
+  var backuptop = window.pageYOffset || document.documentElement.scrollTop;
+  var backupleft = window.pageXOffset || document.documentElement.scrollLeft;
+
   window.scroll(0,0);
 
   var element = (( options.elements === undefined ) ? document.body : options.elements[0]), // select body by default
@@ -43,6 +46,7 @@ _html2canvas.Parse = function (images, options, cb) {
         backgroundColor: background,
         stack: stack
       });
+      window.scroll(backupleft, backuptop);
     });
   }
 
