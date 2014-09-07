@@ -1,6 +1,6 @@
 /*
   html2canvas 0.4.1 <http://html2canvas.hertzen.com>
-  Copyright (c) 2013 Niklas von Hertzen
+  Copyright (c) 2014 Niklas von Hertzen
 
   Released under MIT License
 */
@@ -1032,6 +1032,9 @@ function h2cRenderContext(width, height) {
   };
 }
 _html2canvas.Parse = function (images, options, cb) {
+  var backuptop = window.pageYOffset || document.documentElement.scrollTop;
+  var backupleft = window.pageXOffset || document.documentElement.scrollLeft;
+
   window.scroll(0,0);
 
   var element = (( options.elements === undefined ) ? document.body : options.elements[0]), // select body by default
@@ -1076,6 +1079,7 @@ _html2canvas.Parse = function (images, options, cb) {
         backgroundColor: background,
         stack: stack
       });
+      window.scroll(backupleft, backuptop);
     });
   }
 
@@ -1114,7 +1118,7 @@ _html2canvas.Parse = function (images, options, cb) {
 
     // Using the list of elements we know how pseudo el styles, create fake pseudo elements.
     function findPseudoElements(el) {
-      var els = document.querySelectorAll(classes.join(','));
+      var els = document.querySelectorAll(_.compact(classes).join(','));
       for(var i = 0, j = els.length; i < j; i++) {
         createPseudoElements(els[i]);
       }
@@ -1714,9 +1718,19 @@ _html2canvas.Parse = function (images, options, cb) {
     brh = borderRadius[2][0],
     brv = borderRadius[2][1],
     blh = borderRadius[3][0],
-    blv = borderRadius[3][1],
+    blv = borderRadius[3][1];
 
-    topWidth = width - trh,
+    var halfHeight = Math.floor(height / 2);
+    tlh = tlh > halfHeight ? halfHeight : tlh;
+    tlv = tlv > halfHeight ? halfHeight : tlv;
+    trh = trh > halfHeight ? halfHeight : trh;
+    trv = trv > halfHeight ? halfHeight : trv;
+    brh = brh > halfHeight ? halfHeight : brh;
+    brv = brv > halfHeight ? halfHeight : brv;
+    blh = blh > halfHeight ? halfHeight : blh;
+    blv = blv > halfHeight ? halfHeight : blv;
+
+    var topWidth = width - trh,
     rightHeight = height - brv,
     bottomWidth = width - brh,
     leftHeight = height - blv;
@@ -2802,6 +2816,8 @@ window.html2canvas = function(elements, opts) {
   var queue,
   canvas,
   options = {
+    zoom: 1,
+
     // general
     logging: false,
     elements: elements,
@@ -2949,8 +2965,8 @@ _html2canvas.Renderer.Canvas = function(options) {
     fstyle,
     zStack = parsedData.stack;
 
-    canvas.width = canvas.style.width =  options.width || zStack.ctx.width;
-    canvas.height = canvas.style.height = options.height || zStack.ctx.height;
+    canvas.width = canvas.style.width = (options.width || zStack.ctx.width) * options.zoom;
+    canvas.height = canvas.style.height = (options.height || zStack.ctx.height) * options.zoom;
 
     fstyle = ctx.fillStyle;
     ctx.fillStyle = (Util.isTransparent(parsedData.backgroundColor) && options.background !== undefined) ? options.background : parsedData.backgroundColor;
@@ -2960,6 +2976,7 @@ _html2canvas.Renderer.Canvas = function(options) {
       // set common settings for canvas
       ctx.textBaseline = "bottom";
       ctx.save();
+      ctx.scale(options.zoom, options.zoom);
 
       if (storageContext.transform.matrix) {
         ctx.translate(storageContext.transform.origin[0], storageContext.transform.origin[1]);
@@ -2988,12 +3005,19 @@ _html2canvas.Renderer.Canvas = function(options) {
       if (typeof options.elements[0] === "object" && options.elements[0].nodeName !== "BODY") {
         // crop image to the bounds of selected (single) element
         bounds = _html2canvas.Util.Bounds(options.elements[0]);
+        bounds.left *= options.zoom;
+        bounds.top *= options.zoom;
+        bounds.width *= options.zoom;
+        bounds.height *= options.zoom;
+
         newCanvas = document.createElement('canvas');
         newCanvas.width = Math.ceil(bounds.width);
         newCanvas.height = Math.ceil(bounds.height);
         ctx = newCanvas.getContext("2d");
 
-        ctx.drawImage(canvas, bounds.left, bounds.top, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+        var imgData = canvas.getContext("2d").getImageData(bounds.left, bounds.top, bounds.width, bounds.height);
+        ctx.putImageData(imgData, 0, 0);
+
         canvas = null;
         return newCanvas;
       }
@@ -3002,4 +3026,5 @@ _html2canvas.Renderer.Canvas = function(options) {
     return canvas;
   };
 };
+
 })(window,document);
