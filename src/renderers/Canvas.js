@@ -71,8 +71,8 @@ _html2canvas.Renderer.Canvas = function(options) {
     fstyle,
     zStack = parsedData.stack;
 
-    canvas.width = canvas.style.width =  options.width || zStack.ctx.width;
-    canvas.height = canvas.style.height = options.height || zStack.ctx.height;
+    canvas.width = canvas.style.width = (options.width || zStack.ctx.width) * options.zoom;
+    canvas.height = canvas.style.height = (options.height || zStack.ctx.height) * options.zoom;
 
     fstyle = ctx.fillStyle;
     ctx.fillStyle = (Util.isTransparent(parsedData.backgroundColor) && options.background !== undefined) ? options.background : parsedData.backgroundColor;
@@ -82,6 +82,7 @@ _html2canvas.Renderer.Canvas = function(options) {
       // set common settings for canvas
       ctx.textBaseline = "bottom";
       ctx.save();
+      ctx.scale(options.zoom, options.zoom);
 
       if (storageContext.transform.matrix) {
         ctx.translate(storageContext.transform.origin[0], storageContext.transform.origin[1]);
@@ -110,13 +111,18 @@ _html2canvas.Renderer.Canvas = function(options) {
       if (typeof options.elements[0] === "object" && options.elements[0].nodeName !== "BODY") {
         // crop image to the bounds of selected (single) element
         bounds = _html2canvas.Util.Bounds(options.elements[0]);
+        bounds.left *= options.zoom;
+        bounds.top *= options.zoom;
+        bounds.width *= options.zoom;
+        bounds.height *= options.zoom;
+
         newCanvas = document.createElement('canvas');
         newCanvas.width = Math.ceil(bounds.width);
         newCanvas.height = Math.ceil(bounds.height);
         ctx = newCanvas.getContext("2d");
 
-		var imgData = canvas.getContext("2d").getImageData(bounds.left, bounds.top, bounds.width, bounds.height);
-		ctx.putImageData(imgData, 0, 0);
+        var imgData = canvas.getContext("2d").getImageData(bounds.left, bounds.top, bounds.width, bounds.height);
+        ctx.putImageData(imgData, 0, 0);
 
         canvas = null;
         return newCanvas;

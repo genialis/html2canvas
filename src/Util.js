@@ -3,6 +3,8 @@ window.html2canvas = function(elements, opts) {
   var queue,
   canvas,
   options = {
+    zoom: 1,
+
     // general
     logging: false,
     elements: elements,
